@@ -37,16 +37,20 @@ configDb() {
 	echo "########init default mysql config  #####################"
 	sleep 2
 	cd /tmp
-	echo $passwd | sudo cp /etc/profile ~
-	echo $passwd | sudo chmod 777 profile 
+	echo $passwd | sudo -S  /bin/cp /etc/profile /tmp
+	echo $passwd | sudo -S  chmod 777 profile 
 	echo "export PATH=$PATH:/usr/local/mysql/bin" >> profile 
-	echo $passwd | sudo chmod 644 profile 
-	echo $passwd | sudo /bin/mv profile /etc/
+	echo $passwd | sudo -S  chmod 644 profile 
+	echo $passwd | sudo -S  /bin/mv profile /etc/
 	
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/mysqld
 	echo $passwd | sudo -S mv mysqld /etc/init.d/
 	echo $passwd | sudo -S chmod 755 /etc/init.d/mysqld
-	[ $? -eq 0 ] || exit 1 
+
+	echo $passwd | sudo -S wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
+    echo $passwd | sudo -S chmod 755 my.cnf
+    echo $passwd | sudo -S /bin/mv my.cnf /etc/
+	[ $? -eq 0 ] || exit 1
 	echo "succeed config mysql"
 }
 
@@ -56,13 +60,13 @@ configDbinstance() {
 	echo $passwd | sudo -S mkdir -p /data/mysql/3306/data
 
 	cd /data/mysql/3306/
-	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
-	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
-	echo $passwd | sudo chmod 755 my.cnf mysqld
+	echo $passwd | sudo -S  wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
+    echo $passwd | sudo -S  wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
+    echo $passwd | sudo -S chmod 755 my.cnf mysqld
 	
-	echo $passwd | sudo chown -R mysql /data
-	echo $passwd | sudo sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
-	echo $passwd | sudo sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
+	echo $passwd | sudo -S chown -R mysql /data
+	echo $passwd | sudo -S sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
+	echo $passwd | sudo -S sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
 	
 
 	echo $passwd | sudo -S chown -R mysql mysqld
@@ -79,7 +83,7 @@ startNinitDB() {
 	sleep 1
 	echo $passwd | sudo -S /etc/init.d/mysqld start
 	echo "initial mysql root password...."
-	
+	sleep 5
 	mysqladmin -u root password $dbrootpwd
 	[ $? -eq 0 ] || exit 1
 	mysql -u root -p123456 -e "create database $db"
@@ -114,10 +118,6 @@ installRedis() {
 	echo $passwd | sudo -S make install
 	[ $? -eq 0 ] || exit 1
 	
-	#cp redis.conf /etc/   
-	#cp redis-benchmark redis-cli redis-server /usr/bin/  
-	#启动服务并验证：
-	#redis-server /etc/redis.conf  
 
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/redis/redis-server
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/redis/redis.conf
@@ -140,6 +140,7 @@ installRedis() {
 
 installdb
 configDb
+configDbinstance
 startNinitDB
 configPython
 initialWebpath
