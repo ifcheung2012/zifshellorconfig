@@ -1,12 +1,13 @@
 #!/bin/sh
+##########location  /data/mysql/3306/mysqld##################
 ################################################
 #this scripts is created by ifcheung at 2013-06-09
 ################################################
 
 #init
 port=3306
-mysql_user="root"
-mysql_pwd="123456"
+mysql_user=
+mysql_pwd=
 CmdPath="/usr/local/mysql/bin"
 
 #startup function
