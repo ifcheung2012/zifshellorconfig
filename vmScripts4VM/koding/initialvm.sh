@@ -2,12 +2,18 @@
 
 #curl https://j.mp/spf13-vim3 -L > spf13-vim.sh && sh spf13-vim.sh
 
+mysqlbase=/usr/local/mysql
 
 dbsuper='root'
 dbrootpwd='123456'
 db='ifcheung'
 
 instancePort='3307'
+
+if [ `whoami` != 'root' ]; then
+    echo "you must run this script as root!!!!!!`whoami`"
+    exit 1
+fi
 
 installdb()
 {
@@ -87,10 +93,10 @@ startNinitDB() {
 	/etc/init.d/mysqld start
 	echo "#######initial mysql root password...."
 	sleep 5
-	mysqladmin -u root password $dbrootpwd
+	$mysqlbase/bin/mysqladmin -u root password $dbrootpwd
 	[ $? -eq 0 ] || exit 1
-	mysql -u root -p123456 -e "create database $db"
-	mysql -u root -p123456 -e "drop database test;delete from mysql.user where user='';"
+	$mysqlbase/bin/mysql -u root -p123456 -e "create database $db"
+	$mysqlbase/bin/mysql -u root -p123456 -e "drop database test;delete from mysql.user where user='';"
 	
 	[ $? -eq 0 ] || exit 1
 	echo "#######ok succeed initial database"
