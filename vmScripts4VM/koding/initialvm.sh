@@ -58,6 +58,8 @@ configDb() {
     mkdir data
     chown -R mysql data
 
+    /usr/local/mysql/bin/mysql_install_db --datadir="/usr/local/mysql/data" --user=mysql
+
 	[ $? -eq 0 ] || exit 1
 	echo "#######succeed config primary mysql"
 	sleep 2
@@ -68,7 +70,7 @@ configDb() {
 configDbinstance() {
 	echo "########init  mysql second instance config  #####################"
 	mkdir -p /data/mysql/${instancePort}/data
-	cd /data/${instancePort}/3306/
+	cd /data/mysql/${instancePort}/
 
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
     wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
