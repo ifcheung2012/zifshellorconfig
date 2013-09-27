@@ -8,6 +8,8 @@ dbsuper='root'
 dbrootpwd='123456'
 db='ifcheung'
 
+isrmSetupPkg=1
+
 instancePort='3307'
 
 if [ `whoami` != 'root' ]; then
@@ -30,15 +32,26 @@ installdb()
 
 	cd mysql-5.1.62/
 	
-	./configure --prefix=/usr/local/mysql --with-unix-socket-path=/usr/local/mysql/tmp/mysql.sock --localstatedir=/usr/local/mysql/data --enable-assembler --enable-thread-safe-client --with-mysqld-user=mysql --with-big-tables --without-debug --with-pthread --enable-assembler --with-extra-charsets=complex --with-readline --with-ssl --with-embedded-server --enable-local-infile --with-plugins=partition,innobase --with-plugin-PLUGIN
+	./configure --prefix=/usr/local/mysql --with-unix-socket-path=$mysqlbase/tmp/mysql.sock --localstatedir=$mysqlbase/data --enable-assembler --enable-thread-safe-client --with-mysqld-user=mysql --with-big-tables --without-debug --with-pthread --enable-assembler --with-extra-charsets=complex --with-readline --with-ssl --with-embedded-server --enable-local-infile --with-plugins=partition,innobase --with-plugin-PLUGIN
 	make 
 	make install
 	
 	[ $? -eq 0 ] || exit 1 
-	chown -R mysql /usr/local/mysql
+	chown -R mysql $mysqlbase
 	echo "#######succeed install mysql"
 }
 
+rmsetuppkg()
+{
+    if [ $isrmSetupPkg -eq 1 ]; then
+        /bin/rm -rf  ~/tools  
+        [ $? -eq 0 ] || exit 1 
+        echo "####all setup source packages has been removed!!!####"
+    else
+        echo "###no need to remove setup source packages#####"
+    fi
+    
+}
 
 configDb() {
 	echo "########init default mysql config  #####################"
@@ -54,11 +67,11 @@ configDb() {
     chmod 755 my.cnf
     /bin/mv my.cnf /etc/
 
-    cd /usr/local/mysql/
+    cd $mysqlbase
     mkdir data
     chown -R mysql data
 
-    /usr/local/mysql/bin/mysql_install_db --datadir="/usr/local/mysql/data" --user=mysql
+    $mysqlbase/bin/mysql_install_db --datadir="/usr/local/mysql/data" --user=mysql
 
 	[ $? -eq 0 ] || exit 1
 	echo "#######succeed config primary mysql"
@@ -67,26 +80,7 @@ configDb() {
 
 
 
-configDbinstance() {
-	echo "########init  mysql second instance config  #####################"
-	mkdir -p /data/mysql/${instancePort}/data
-	cd /data/mysql/${instancePort}/
 
-	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
-    wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
-    chmod 755 my.cnf mysqld
-	chown -R mysql /data
-	chmod u+x mysqld
-	sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
-	sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
-
-
-	/usr/local/mysql/bin/mysql_install_db --datadir="/data/mysql/${instancePort}/data/"
-	
-	[ $? -eq 0 ] || exit 1 
-	echo "#######succeed config second mysql instance!!"
-	sleep 3
-}
 
 
 startNinitDB() {
@@ -105,7 +99,26 @@ startNinitDB() {
 	sleep 3
 }
 
+configDbinstance() {
+	echo "########init  mysql second instance config  #####################"
+	mkdir -p /data/mysql/${instancePort}/data
+	cd /data/mysql/${instancePort}/
 
+	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
+    wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
+    chmod 755 my.cnf mysqld
+	chown -R mysql /data
+	chmod u+x mysqld
+	sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
+	sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
+
+
+	$mysqlbase/bin/mysql_install_db --datadir="/data/mysql/${instancePort}/data/"
+	
+	[ $? -eq 0 ] || exit 1 
+	echo "#######succeed config second mysql instance!!"
+	sleep 3
+}
 
 configPython() {
 	echo "########### initial python package config######"
@@ -152,9 +165,10 @@ installRedis() {
 
 
 installdb
+rmsetuppkg
 configDb
-configDbinstance
 startNinitDB
+configDbinstance
 configPython
 initialWebpath
 installRedis
