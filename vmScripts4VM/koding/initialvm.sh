@@ -44,7 +44,7 @@ installdb()
 rmsetuppkg()
 {
     if [ $isrmSetupPkg -eq 1 ]; then
-        /bin/rm -rf  ~/tools  
+        /bin/rm -rf  ~/tools/*  
         [ $? -eq 0 ] || exit 1 
         echo "####all setup source packages has been removed!!!####"
     else
@@ -62,6 +62,7 @@ configDb() {
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/mysqld
 	/bin/mv mysqld /etc/init.d/
 	chmod 755 /etc/init.d/mysqld
+	
 
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/my.cnf
     chmod 755 my.cnf
@@ -89,7 +90,7 @@ startNinitDB() {
 	/etc/init.d/mysqld start
 	echo "#######initial mysql root password...."
 	sleep 5
-	$mysqlbase/bin/mysqladmin -u root password $dbrootpwd
+	$mysqlbase/bin/mysqladmin -u root -p123456 password $dbrootpwd
 	[ $? -eq 0 ] || exit 1
 	$mysqlbase/bin/mysql -u root -p123456 -e "create database $db"
 	$mysqlbase/bin/mysql -u root -p123456 -e "drop database test;delete from mysql.user where user='';"
@@ -123,7 +124,7 @@ configDbinstance() {
 configPython() {
 	echo "########### initial python package config######"
 	sleep 2
-	apt-get install python-pip python-mysqldb
+	echo y | apt-get install python-pip python-mysqldb
 	pip install tornado sqlalchemy mako
 	[ $? -eq 0 ] || exit 1
 	echo "#######ok succeed initial python package config"
@@ -173,5 +174,4 @@ configPython
 initialWebpath
 installRedis
 
-
-
+echo "#######all packages has been installed,pls check###""
