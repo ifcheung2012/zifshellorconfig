@@ -90,7 +90,7 @@ startNinitDB() {
 	/etc/init.d/mysqld start
 	echo "#######initial mysql root password...."
 	sleep 5
-	$mysqlbase/bin/mysqladmin -u root -p123456 password $dbrootpwd
+	$mysqlbase/bin/mysqladmin -u root  password $dbrootpwd
 	[ $? -eq 0 ] || exit 1
 	$mysqlbase/bin/mysql -u root -p123456 -e "create database $db"
 	$mysqlbase/bin/mysql -u root -p123456 -e "drop database test;delete from mysql.user where user='';"
@@ -164,6 +164,7 @@ installRedis() {
 	echo "#######ok succeed install redis"
 }
 
+echo "##some problems like this:http://www.binghe.org/2012/05/mysql-error-couldnot-find-mysql-manager-or-server/"
 
 installdb
 rmsetuppkg
