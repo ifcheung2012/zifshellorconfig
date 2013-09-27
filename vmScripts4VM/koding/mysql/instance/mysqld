@@ -5,7 +5,7 @@
 ################################################
 
 #init
-port=3306
+port=3307
 mysql_user=
 mysql_pwd=
 CmdPath="/usr/local/mysql/bin"

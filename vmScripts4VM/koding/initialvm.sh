@@ -2,22 +2,23 @@
 
 #curl https://j.mp/spf13-vim3 -L > spf13-vim.sh && sh spf13-vim.sh
 
-passwd='auditor_1982'
 
-db='ifcheung'
 dbsuper='root'
 dbrootpwd='123456'
+db='ifcheung'
 
+instancePort='3307'
 
 installdb()
 {
-	echo "this script will download mysql and self config,and then make && make install mysql"
+	echo "#######this script will download mysql and self config,and then make && make install mysql"
 	sleep 2
-	echo $passwd | sudo -S groupadd mysql
-	echo $passwd | sudo -S useradd -s /sbin/nologin -g mysql -M mysql
+	groupadd mysql
+	useradd -s /sbin/nologin -g mysql -M mysql
 	mkdir ~/tools
 	cd ~/tools
 	tail -l /etc/passwd
+	sleep 5
 	wget http://mysql.ntu.edu.tw/Downloads/MySQL-5.1/mysql-5.1.62.tar.gz
 	tar zxf mysql-5.1.62.tar.gz
 
@@ -25,64 +26,66 @@ installdb()
 	
 	./configure --prefix=/usr/local/mysql --with-unix-socket-path=/usr/local/mysql/tmp/mysql.sock --localstatedir=/usr/local/mysql/data --enable-assembler --enable-thread-safe-client --with-mysqld-user=mysql --with-big-tables --without-debug --with-pthread --enable-assembler --with-extra-charsets=complex --with-readline --with-ssl --with-embedded-server --enable-local-infile --with-plugins=partition,innobase --with-plugin-PLUGIN
 	make 
-	echo $passwd | sudo -S make install
+	make install
 	
 	[ $? -eq 0 ] || exit 1 
-	echo $passwd | sudo -S chown -R mysql /usr/local/mysql
-	echo "succeed install mysql"
+	chown -R mysql /usr/local/mysql
+	echo "#######succeed install mysql"
 }
 
 
 configDb() {
 	echo "########init default mysql config  #####################"
 	sleep 2
-	cd /tmp
-	echo $passwd | sudo -S  /bin/cp /etc/profile /tmp
-	echo $passwd | sudo -S  chmod 777 profile 
-	echo "export PATH=$PATH:/usr/local/mysql/bin" >> profile 
-	echo $passwd | sudo -S  chmod 644 profile 
-	echo $passwd | sudo -S  /bin/mv profile /etc/
-	
-	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/mysqld
-	echo $passwd | sudo -S mv mysqld /etc/init.d/
-	echo $passwd | sudo -S chmod 755 /etc/init.d/mysqld
+	echo "export PATH=$PATH:/usr/local/mysql/bin" >> /etc/profile
 
-	echo $passwd | sudo -S wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
-    echo $passwd | sudo -S chmod 755 my.cnf
-    echo $passwd | sudo -S /bin/mv my.cnf /etc/
+	cd ~/tools
+	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/mysqld
+	/bin/mv mysqld /etc/init.d/
+	chmod 755 /etc/init.d/mysqld
+
+	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/my.cnf
+    chmod 755 my.cnf
+    /bin/mv my.cnf /etc/
+
+    cd /usr/local/mysql/
+    mkdir data
+    chown -R mysql data
+
 	[ $? -eq 0 ] || exit 1
-	echo "succeed config mysql"
+	echo "#######succeed config primary mysql"
+	sleep 2
 }
 
 
 
 configDbinstance() {
-	echo $passwd | sudo -S mkdir -p /data/mysql/3306/data
+	echo "########init  mysql second instance config  #####################"
+	mkdir -p /data/mysql/${instancePort}/data
+	cd /data/${instancePort}/3306/
 
-	cd /data/mysql/3306/
-	echo $passwd | sudo -S  wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
-    echo $passwd | sudo -S  wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
-    echo $passwd | sudo -S chmod 755 my.cnf mysqld
-	
-	echo $passwd | sudo -S chown -R mysql /data
-	echo $passwd | sudo -S sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
-	echo $passwd | sudo -S sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
-	
+	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/my.cnf
+    wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/mysql/instance/mysqld
+    chmod 755 my.cnf mysqld
+	chown -R mysql /data
+	chmod u+x mysqld
+	sed -i "s/mysql_user=/mysql_user=${dbsuper}/g"  mysqld
+	sed -i "s/mysql_pwd=/mysql_pwd=${dbrootpwd}/g"  mysqld
 
-	echo $passwd | sudo -S chown -R mysql mysqld
-	echo $passwd | sudo -S chmod u+x mysqld
-	echo $passwd | sudo -S /usr/local/mysql/bin/mysql_install_db --datadir='/data/mysql/3306/data/'
+
+	/usr/local/mysql/bin/mysql_install_db --datadir="/data/mysql/${instancePort}/data/"
 	
 	[ $? -eq 0 ] || exit 1 
-	echo "succeed config mysql"
+	echo "#######succeed config second mysql instance!!"
+	sleep 3
 }
 
 
 startNinitDB() {
-	echo "start..mysql...and initial   database. ;and remove verbose users.."
+	echo "#######start..mysql...and initial   database. ;and remove verbose users.##########."
 	sleep 1
-	echo $passwd | sudo -S /etc/init.d/mysqld start
-	echo "initial mysql root password...."
+	/etc/init.d/mysqld start
+	echo "#######initial mysql root password...."
 	sleep 5
 	mysqladmin -u root password $dbrootpwd
 	[ $? -eq 0 ] || exit 1
@@ -90,7 +93,8 @@ startNinitDB() {
 	mysql -u root -p123456 -e "drop database test;delete from mysql.user where user='';"
 	
 	[ $? -eq 0 ] || exit 1
-	echo "ok succeed initial database"
+	echo "#######ok succeed initial database"
+	sleep 3
 }
 
 
@@ -98,10 +102,11 @@ startNinitDB() {
 configPython() {
 	echo "########### initial python package config######"
 	sleep 2
-	echo $passwd | sudo -S apt-get install python-pip python-mysqldb
-	echo $passwd | sudo -S pip install tornado sqlalchemy mako
+	apt-get install python-pip python-mysqldb
+	pip install tornado sqlalchemy mako
 	[ $? -eq 0 ] || exit 1
-	echo "ok succeed initial python package config"
+	echo "#######ok succeed initial python package config"
+	sleep 3
 }
 
 initialWebpath() {
@@ -115,26 +120,26 @@ installRedis() {
 	tar -zxf redis-2.2.13.tar.gz
 	cd redis-2.2.13/
 	make
-	echo $passwd | sudo -S make install
+	make install
 	[ $? -eq 0 ] || exit 1
 	
 
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/redis/redis-server
 	wget https://raw.github.com/ifcheung2012/zifshellorconfig/master/vmScripts4VM/koding/redis/redis.conf
-	echo $passwd | sudo -S mv redis-server /etc/init.d/redis-server
-	echo $passwd | sudo -S chmod ug+x /etc/init.d/redis-server 
-	echo $passwd | sudo -S mv redis.conf /etc/redis.conf
-	echo $passwd | sudo -S useradd redis
-	echo $passwd | sudo -S mkdir -p /var/{log,lib}/redis
+	mv redis-server /etc/init.d/redis-server
+	chmod ug+x /etc/init.d/redis-server 
+	mv redis.conf /etc/redis.conf
+	useradd redis
+	mkdir -p /var/{log,lib}/redis
 
-	echo $passwd | sudo -S chown redis.redis /var/{log,lib}/redis
+	chown redis.redis /var/{log,lib}/redis
 
-	echo $passwd | sudo -S update-rc.d redis-server defaults
+	update-rc.d redis-server defaults
 	
     
 	which redis-cli
 
-	echo "ok succeed install redis"
+	echo "#######ok succeed install redis"
 }
 
 
