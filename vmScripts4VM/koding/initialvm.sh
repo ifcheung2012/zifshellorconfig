@@ -175,4 +175,4 @@ configPython
 initialWebpath
 installRedis
 
-echo "#######all packages has been installed,pls check###""
+echo "#######all packages has been installed,pls check###"
